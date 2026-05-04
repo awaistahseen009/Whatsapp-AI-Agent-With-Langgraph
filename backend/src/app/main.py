@@ -5,6 +5,7 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from src.app.routes.user_router import auth_router
 from src.app.routes.property_router import property_router
 from src.app.routes.meeting_router import meeting_router
@@ -32,6 +33,14 @@ app = FastAPI(
     description="Backend API for Riley Estate — real estate agency dashboard",
     version="1.0.0",
     lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # For production, restrict this, but * works for all Vite network urls
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ─── Register routers ────────────────────────────────────────────────────────

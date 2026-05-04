@@ -39,6 +39,20 @@ class Settings(BaseSettings):
     def CELERY_RESULT_BACKEND(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
+    CHROMA_HOST:str
+    CHROMA_PORT:int
+    AGENT_TIMEZONE:str = "Asia/Karachi"
+    REDIS_PORT:str
+    REDIS_HOST:str
+
+    @property
+    def CELERY_BROKER_URL(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+
+    @property
+    def CELERY_RESULT_BACKEND(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+
     WHATSAPP_VERIFY_TOKEN:str = "my_custom_verify_token"
     WHATSAPP_TOKEN:str = ""
     WHATSAPP_PHONE_ID:str = ""
@@ -46,7 +60,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM:str = "HS256"
 
     model_config = SettingsConfigDict(
-        env_file=".env", 
+        env_file="../.env", 
         extra="ignore"
     )
 
