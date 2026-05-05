@@ -11,11 +11,11 @@ passwd_context = CryptContext(
     bcrypt__truncate_error=False,
 )
 
-def generate_hash_password(password:str):
-    return passwd_context.hash(password)
+def generate_hash_password(password: str):
+    return passwd_context.hash(password[:72])
 
-def verify_password(password:str, hash:str):
-    return passwd_context.verify(password, hash)
+def verify_password(password: str, hash: str):
+    return passwd_context.verify(password[:72], hash)
 
 def create_access_token(user_data:dict, expiry:timedelta = None, refresh:bool = False):
     payload = {}
