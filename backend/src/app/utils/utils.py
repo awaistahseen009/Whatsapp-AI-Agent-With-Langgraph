@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import uuid
 from config import Config
 import logging
+import bcrypt
+import hashlib
 
 ACCESS_TOKEN_EXPIRY_TIME = 3600
 passwd_context = CryptContext(
@@ -11,11 +13,14 @@ passwd_context = CryptContext(
     bcrypt__truncate_error=False,
 )
 
-def generate_hash_password(password: str):
-    return passwd_context.hash(password[:72])
+def _prepare(password: str) -> bytes:
+    return hashlib.sha256(password.encode()).hexdigest().encode()
 
-def verify_password(password: str, hash: str):
-    return passwd_context.verify(password[:72], hash)
+def generate_hash_password(password: str) -> str:
+    return bcrypt.hashpw(_prepare(password), bcrypt.gensalt()).decode()
+
+def verify_password(password: str, hash: str) -> bool:
+    return bcrypt.checkpw(_prepare(password), hash.encode())
 
 def create_access_token(user_data:dict, expiry:timedelta = None, refresh:bool = False):
     payload = {}
