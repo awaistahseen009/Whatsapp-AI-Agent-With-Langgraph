@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Calendar, MapPin, Video, Trash2, XCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Calendar, MapPin, Video, Trash2, XCircle, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../contexts/AuthContext';
 
