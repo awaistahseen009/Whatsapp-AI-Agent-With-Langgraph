@@ -1,9 +1,13 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from src.app.models.meeting import Meeting, MeetingStatus
+from src.app.models.conversation_session import ConversationSession
+from src.app.models.transcript import Transcript
 from src.app.schemas.meeting_schema import MeetingUpdateSchema, MeetingCreateSchema
-from typing import Optional
+from src.app.services.chat_service import ChatService
+from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
+import json
 
 
 class MeetingService:
@@ -62,6 +66,74 @@ class MeetingService:
         await session.commit()
         await session.refresh(meeting)
         return meeting
+
+    async def get_meeting_details(self, meeting_id: str, session: AsyncSession) -> Optional[Dict[str, Any]]:
+        """Get meeting details with conversation summary and transcripts"""
+        meeting = await self.get_meeting(meeting_id, session)
+        if not meeting:
+            return None
+
+        # Get conversation session for this client around the meeting time
+        meeting_date = meeting.start_time.date()
+        start_of_day = datetime.combine(meeting_date, datetime.min.time())
+        end_of_day = datetime.combine(meeting_date, datetime.max.time())
+
+        session_statement = select(ConversationSession).where(
+            ConversationSession.client_phone == meeting.client_phone,
+            ConversationSession.started_at >= start_of_day,
+            ConversationSession.started_at <= end_of_day
+        ).order_by(ConversationSession.started_at.desc())
+        
+        session_result = await session.exec(session_statement)
+        conversation_session = session_result.first()
+
+        transcripts = []
+        summary = meeting.conversation_summary
+
+        if conversation_session:
+            chat_service = ChatService()
+            transcripts = await chat_service.get_session_transcripts(conversation_session.session_id, session)
+            
+            # If no summary exists, generate one from transcripts
+            if not summary and transcripts:
+                summary = await self._generate_summary_from_transcripts(transcripts)
+                # Save the summary to the meeting
+                meeting.conversation_summary = summary
+                session.add(meeting)
+                await session.commit()
+
+        return {
+            **meeting.model_dump(),
+            "conversation_session": conversation_session.model_dump() if conversation_session else None,
+            "transcripts": [t.model_dump() for t in transcripts],
+            "generated_summary": summary
+        }
+
+    async def _generate_summary_from_transcripts(self, transcripts) -> str:
+        """Generate a summary from conversation transcripts using OpenAI API"""
+        try:
+            from langchain_openai import ChatOpenAI
+            from langchain_core.messages import HumanMessage, SystemMessage
+            from config import config
+            
+            if not getattr(config, "OPENAI_API_KEY", None):
+                return f"Fall-back simple summary: Conversation lasted {len(transcripts)} total messages."
+
+            llm = ChatOpenAI(temperature=0, model="gpt-4o-mini", api_key=config.OPENAI_API_KEY)
+            
+            chat_history = ""
+            for t in transcripts[-50:]: # cap at last 50
+                chat_history += f"{t.message_type.upper()}: {t.message_content}\n"
+                
+            messages = [
+                SystemMessage(content="You are an expert AI assistant context engine for Riley Estate. Provide a structured, coherent 1-paragraph summary of the following WhatsApp conversation between an AI Agent and a Client. Focus on their real estate intent, constraints, and why a meeting was scheduled. Refrain from using markdown bold tags or bullets."),
+                HumanMessage(content=chat_history)
+            ]
+            response = await llm.ainvoke(messages)
+            return str(response.content)
+        except Exception as e:
+            print(f"Summarization error: {e}")
+            return f"Conversation spanned {len(transcripts)} messages."
 
     async def cancel_meeting(self, meeting_id: str, reason: str, session: AsyncSession):
         meeting = await self.get_meeting(meeting_id, session)

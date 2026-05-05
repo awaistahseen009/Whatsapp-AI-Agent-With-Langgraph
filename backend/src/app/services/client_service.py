@@ -34,3 +34,12 @@ class ClientService:
         ).order_by(ClientPropertyViews.viewed_at.desc())
         result = await session.exec(statement)
         return result.all()
+
+    async def get_clients_by_date_range(self, session: AsyncSession, start_date, end_date):
+        """Get clients created within a date range"""
+        statement = select(Client).where(
+            Client.created_at >= start_date,
+            Client.created_at <= end_date
+        ).order_by(Client.created_at.desc())
+        result = await session.exec(statement)
+        return result.all()

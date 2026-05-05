@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Loader2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -84,40 +85,19 @@ export default function EscalationsPage() {
                 <p className="text-sm font-semibold text-anthropic-dark mb-1">AI Reason for handover:</p>
                 <p className="text-sm text-anthropic-gray mb-4">{escalation.reason}</p>
 
-                <p className="text-sm font-semibold text-anthropic-dark mb-1">Conversation Context:</p>
-                <p className="text-sm text-anthropic-gray italic mb-4">"{escalation.conversation_summary}"</p>
-
                 <p className="text-sm font-semibold text-anthropic-dark mb-1">Last message from client:</p>
                 <p className="text-sm text-anthropic-dark bg-white border border-cream-200 inline-block px-3 py-2 rounded">
                   "{escalation.last_client_message}"
                 </p>
               </div>
 
-              <div className="mt-5 flex gap-3">
-                <button
-                  onClick={() => window.open(`https://wa.me/${escalation.client_phone.replace(/\+/g, '')}`, '_blank')}
-                   className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-anthropic-dark hover:bg-black focus:outline-none transition-colors"
-                >
-                  Contact on WhatsApp
-                </button>
-                {user?.role === 'owner' && (
-                  <>
-                    <button
-                      onClick={() => handleResolve(escalation.escalation_id, 'resolved')}
-                      className="inline-flex items-center justify-center px-4 py-2 border border-cream-200 text-sm font-medium rounded-md text-anthropic-dark bg-white hover:bg-green-50 transition-colors"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      Mark Resolved
-                    </button>
-                    <button
-                      onClick={() => handleResolve(escalation.escalation_id, 'dismissed')}
-                      className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-anthropic-gray hover:text-red-600 transition-colors"
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Dismiss
-                    </button>
-                  </>
-                )}
+               <div className="mt-5 flex gap-3">
+                 <Link
+                   to={`/escalations/${escalation.escalation_id}/edit`}
+                   className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-anthropic-dark hover:bg-black w-full focus:outline-none transition-colors"
+                 >
+                   Resolve Escalation &rarr;
+                 </Link>
               </div>
             </div>
           ))}

@@ -26,6 +26,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Do not intercept if the failing request is the login endpoint itself
+    if (originalRequest.url?.includes('/auth/login')) {
+      return Promise.reject(error);
+    }
+
     // Only attempt refresh if 401/403 and hasn't been retried yet
     if (
       error.response &&

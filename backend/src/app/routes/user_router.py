@@ -37,6 +37,28 @@ async def create_user_account(
     new_user: User = await service.create_user(user_data, session)
     return new_user.model_dump()
 
+@auth_router.get("/agents")
+async def get_all_agents(
+    token_data: dict = Depends(RoleChecker(["owner"])),
+    session: AsyncSession = Depends(get_session)
+):
+    from sqlmodel import select
+    from src.app.models.user import User
+    
+    statement = select(User)
+    results = await session.exec(statement)
+    users = results.all()
+    
+    return [
+        {
+            "id": str(u.id),
+            "name": u.name,
+            "email": u.email,
+            "role": u.role.value,
+            "created_at": u.created_at.isoformat()
+        } for u in users
+    ]
+
 
 # ─── Login / Logout / Token ──────────────────────────────────────────────────
 
@@ -60,39 +82,42 @@ async def user_login(
 ):
     if user_data.email is None or user_data.password is None:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="Please enter the correct password and email")
+        
     user: User = await service.get_user_by_email(user_data.email, session)
-    if user is not None:
-        if not verify_password(user_data.password, user.password_hash):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid email or password")
-        else:
-            access_token = create_access_token(
-                user_data={
-                    'email': user.email,
-                    "user_id": str(user.id),
-                    "role": user.role.value
-                }
-            )
-            refresh_token = create_access_token(
-                user_data={
-                    'email': user.email,
-                    "user_id": str(user.id),
-                    "role": user.role.value
-                },
-                expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
-                refresh=True
-            )
-            return JSONResponse(
-                {
-                    "message": "Login Successful",
-                    "user": {
-                        'email': user.email,
-                        "user_id": str(user.id),
-                        "role": user.role.value
-                    },
-                    'access_token': access_token,
-                    'refresh_token': refresh_token
-                }
-            )
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid email or password")
+        
+    if not verify_password(user_data.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid email or password")
+        
+    access_token = create_access_token(
+        user_data={
+            'email': user.email,
+            "user_id": str(user.id),
+            "role": user.role.value
+        }
+    )
+    refresh_token = create_access_token(
+        user_data={
+            'email': user.email,
+            "user_id": str(user.id),
+            "role": user.role.value
+        },
+        expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
+        refresh=True
+    )
+    return JSONResponse(
+        {
+            "message": "Login Successful",
+            "user": {
+                'email': user.email,
+                "user_id": str(user.id),
+                "role": user.role.value
+            },
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        }
+    )
 
 
 @auth_router.post("/logout")
@@ -126,6 +151,22 @@ async def set_question(
     )
     return {"message": "Security question set successfully", "question_id": str(sq.question_id)}
 
+@auth_router.get("/has-security-question")
+async def has_security_question(
+    token_data: dict = Depends(AccessTokenBearer()),
+    session: AsyncSession = Depends(get_session)
+):
+    from sqlmodel import select
+    from src.app.models.security_question import SecurityQuestion
+    import uuid
+    
+    user_id = token_data.get("user", {}).get("user_id")
+    if not user_id:
+        return {"has_security_question": False}
+        
+    statement = select(SecurityQuestion).where(SecurityQuestion.user_id == uuid.UUID(user_id))
+    result = await session.exec(statement)
+    return {"has_security_question": result.first() is not None}
 
 # ─── Change Password ─────────────────────────────────────────────────────────
 

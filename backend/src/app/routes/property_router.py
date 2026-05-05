@@ -11,6 +11,24 @@ service = PropertyService()
 property_router = APIRouter()
 
 
+@property_router.get("/count")
+async def get_properties_count(
+    city: Optional[str] = None,
+    property_type: Optional[str] = None,
+    listing_type: Optional[str] = None,
+    min_price: Optional[int] = None,
+    max_price: Optional[int] = None,
+    bedrooms: Optional[int] = None,
+    available_only: bool = True,
+    token_data: dict = Depends(AccessTokenBearer()),
+    session: AsyncSession = Depends(get_session),
+):
+    count = await service.get_properties_count(
+        session, city, property_type, listing_type,
+        min_price, max_price, bedrooms, available_only
+    )
+    return {"count": count}
+
 @property_router.get("/")
 async def list_properties(
     city: Optional[str] = None,
@@ -52,6 +70,31 @@ async def create_property(
 ):
     prop = await service.create_property(data, session)
     return prop.model_dump()
+
+
+@property_router.get("/stats/monthly")
+async def get_monthly_property_stats(
+    token_data: dict = Depends(RoleChecker(["owner", "agent"])),
+    session: AsyncSession = Depends(get_session),
+):
+    """Get property stats for current and previous month"""
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    last_month_start = (current_month_start - timedelta(days=32)).replace(day=1)
+    last_month_end = current_month_start - timedelta(microseconds=1)
+    
+    current_properties = await service.get_properties_by_date_range(session, current_month_start, now)
+    last_month_properties = await service.get_properties_by_date_range(session, last_month_start, last_month_end)
+    
+    return {
+        "current_month": {
+            "total_properties": len(current_properties)
+        },
+        "last_month": {
+            "total_properties": len(last_month_properties)
+        }
+    }
 
 
 @property_router.put("/{property_id}")

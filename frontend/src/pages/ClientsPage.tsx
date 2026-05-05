@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Loader2 } from 'lucide-react';
 import api from '../api/axios';
 
@@ -88,7 +89,7 @@ export default function ClientsPage() {
               </thead>
               <tbody className="bg-white divide-y divide-cream-200">
                 {clients.map((client) => (
-                  <tr key={client.phone_num} className="hover:bg-cream-50 transition-colors">
+                  <tr key={client.phone_num} className="hover:bg-cream-50 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div>
@@ -111,7 +112,12 @@ export default function ClientsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a href="#" className="text-accent-blue hover:text-blue-900 transition-colors">Details</a>
+                      <Link 
+                        to={`/clients/${client.phone_num.replace('+', '')}`} 
+                        className="inline-flex items-center px-3 py-1.5 border border-cream-200 shadow-sm text-xs font-medium rounded-md text-anthropic-dark bg-white hover:bg-cream-100 focus:outline-none transition-colors"
+                      >
+                        Details &rarr;
+                      </Link>
                     </td>
                   </tr>
                 ))}

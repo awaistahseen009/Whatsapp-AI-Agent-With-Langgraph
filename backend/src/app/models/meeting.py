@@ -47,6 +47,7 @@ class Meeting(SQLModel, table=True):
         sa_column=Column(SAEnum(MeetingStatus, name = "meetingstatus"), nullable=False, default=MeetingStatus.SCHEDULED)
     )
     notes: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True))
+    conversation_summary: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True))
     created_at: datetime = Field(
         sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False, default=datetime.now)
     )

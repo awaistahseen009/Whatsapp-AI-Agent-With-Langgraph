@@ -5,11 +5,13 @@ import api from '../api/axios';
 interface ChatSession {
   session_id: string;
   client_phone: string;
-  start_time: string;
-  last_interaction_at: string;
+  started_at: string;
+  ended_at: string | null;
   message_count: number;
   escalated: boolean;
 }
+
+import { Link } from 'react-router-dom';
 
 export default function ChatSessionsPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -48,7 +50,7 @@ export default function ChatSessionsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((session) => (
-            <div key={session.session_id} className="bg-white border border-cream-200 rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col p-5 cursor-pointer relative overflow-hidden">
+            <div key={session.session_id} className="bg-white border border-cream-200 rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col p-5 relative overflow-hidden">
                {session.escalated && (
                  <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] uppercase font-bold px-2 py-1 rounded-bl-md">
                    Escalated
@@ -63,15 +65,18 @@ export default function ChatSessionsPage() {
                 </div>
               </div>
               <div className="text-xs text-anthropic-gray space-y-1">
-                <p>Started: {new Date(session.start_time).toLocaleDateString()} {new Date(session.start_time).toLocaleTimeString()}</p>
-                <p>Last interaction: {new Date(session.last_interaction_at).toLocaleTimeString()}</p>
+                <p>Started: {session.started_at ? `${new Date(session.started_at).toLocaleDateString()} ${new Date(session.started_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'N/A'}</p>
+                <p>Last interaction: {session.ended_at ? new Date(session.ended_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : (session.started_at ? new Date(session.started_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Ongoing')}</p>
                 <p>Total messages: {session.message_count}</p>
               </div>
               
-              <div className="mt-4 pt-4 border-t border-cream-100">
-                <button className="text-accent-blue text-sm font-medium hover:underline focus:outline-none">
+              <div className="mt-4 pt-4 border-t border-cream-100 flex items-center justify-between">
+                <Link 
+                  to={`/sessions/${session.session_id}`}
+                  className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-cream-200 shadow-sm text-sm font-medium rounded-md text-anthropic-dark bg-white hover:bg-cream-100 focus:outline-none transition-colors w-full justify-center"
+                >
                   View Full Transcript &rarr;
-                </button>
+                </Link>
               </div>
             </div>
           ))}

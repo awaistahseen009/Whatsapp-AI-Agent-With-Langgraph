@@ -1,5 +1,5 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlmodel import select
+from sqlmodel import select, func
 from src.app.models.property import Property, PropertyType, ListingType
 from src.app.schemas.property_schema import PropertyCreateSchema, PropertyUpdateSchema
 from typing import Optional
@@ -39,6 +39,35 @@ class PropertyService:
         result = await session.exec(statement)
         return result.all()
 
+    async def get_properties_count(
+        self,
+        session: AsyncSession,
+        city: Optional[str] = None,
+        property_type: Optional[str] = None,
+        listing_type: Optional[str] = None,
+        min_price: Optional[int] = None,
+        max_price: Optional[int] = None,
+        bedrooms: Optional[int] = None,
+        available_only: bool = True,
+    ):
+        statement = select(func.count(Property.property_id))
+        if available_only:
+            statement = statement.where(Property.available == True)
+        if city:
+            statement = statement.where(Property.location_city.ilike(f"%{city}%"))
+        if property_type:
+            statement = statement.where(Property.property_type == property_type)
+        if listing_type:
+            statement = statement.where(Property.listing_type == listing_type)
+        if min_price is not None:
+            statement = statement.where(Property.price >= min_price)
+        if max_price is not None:
+            statement = statement.where(Property.price <= max_price)
+        if bedrooms is not None:
+            statement = statement.where(Property.bedrooms >= bedrooms)
+        result = await session.exec(statement)
+        return result.first()[0] if result.first() else 0
+
     async def get_property(self, property_id: str, session: AsyncSession):
         statement = select(Property).where(Property.property_id == property_id)
         result = await session.exec(statement)
@@ -70,3 +99,12 @@ class PropertyService:
         await session.delete(prop)
         await session.commit()
         return True
+
+    async def get_properties_by_date_range(self, session: AsyncSession, start_date, end_date):
+        """Get properties created within a date range"""
+        statement = select(Property).where(
+            Property.created_at >= start_date,
+            Property.created_at <= end_date
+        ).order_by(Property.created_at.desc())
+        result = await session.exec(statement)
+        return result.all()

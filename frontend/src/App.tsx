@@ -8,6 +8,16 @@ import ChatSessionsPage from './pages/ChatSessionsPage';
 import PropertiesPage from './pages/PropertiesPage';
 import MeetingsPage from './pages/MeetingsPage';
 import EscalationsPage from './pages/EscalationsPage';
+import ClientDetailPage from './pages/ClientDetailPage';
+import SessionDetailPage from './pages/SessionDetailPage';
+import PropertyEditPage from './pages/PropertyEditPage';
+import MeetingEditPage from './pages/MeetingEditPage';
+import MeetingDetailPage from './pages/MeetingDetailPage';
+import EscalationEditPage from './pages/EscalationEditPage';
+import ProfilePage from './pages/ProfilePage';
+import SystemLogsPage from './pages/SystemLogsPage';
+import AgentEditPage from './pages/AgentEditPage';
+import AgentsPage from './pages/AgentsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Protect routes based on authentication
@@ -40,10 +50,23 @@ function AppRoutes() {
       <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route index element={<DashboardOverview />} />
         <Route path="clients" element={<ClientsPage />} />
+        <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="sessions" element={<ChatSessionsPage />} />
+        <Route path="sessions/:id" element={<SessionDetailPage />} />
         <Route path="properties" element={<PropertiesPage />} />
+        <Route path="properties/new" element={<PropertyEditPage />} />
+        <Route path="properties/:id/edit" element={<PropertyEditPage />} />
         <Route path="meetings" element={<MeetingsPage />} />
+        <Route path="meetings/:id" element={<MeetingDetailPage />} />
+        <Route path="meetings/:id/edit" element={<MeetingEditPage />} />
         <Route path="escalations" element={<EscalationsPage />} />
+        <Route path="escalations/:id/edit" element={<EscalationEditPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        
+        {/* Owner Only Routes */}
+        <Route path="agents" element={<ProtectedRoute requiredRole="owner"><AgentsPage /></ProtectedRoute>} />
+        <Route path="agents/new" element={<ProtectedRoute requiredRole="owner"><AgentEditPage /></ProtectedRoute>} />
+        <Route path="system-logs" element={<ProtectedRoute requiredRole="owner"><SystemLogsPage /></ProtectedRoute>} />
       </Route>
 
       {/* 404 Not Found Fallback */}

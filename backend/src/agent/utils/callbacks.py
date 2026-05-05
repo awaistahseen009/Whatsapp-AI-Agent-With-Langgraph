@@ -124,8 +124,8 @@ class AgentLoggingCallback(AsyncCallbackHandler):
         tokens_out = token_usage.get("completion_tokens", 0)
         model_name = response.llm_output.get("model_name", "unknown_model")
 
-        # Basic cost estimation (can be moved to config if needed)
-        cost_usd = (tokens_in * 0.0000000) + (tokens_out * 0.0000000) # Open source models mostly free
+        # GPT-4o-mini pricing: $0.150 / 1M input tokens, $0.600 / 1M output tokens
+        cost_usd = (tokens_in * 0.000000150) + (tokens_out * 0.000000600)
 
         async with get_async_session() as session:
             log = TokenLog(

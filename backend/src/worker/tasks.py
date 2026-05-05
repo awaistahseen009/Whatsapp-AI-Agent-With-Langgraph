@@ -187,6 +187,46 @@ async def async_process_whatsapp_message(payload: dict):
             except Exception:
                 await db_session.rollback()
 
+        # Fire-and-forget transcript saving - save both user message and AI response
+        if active_session:
+            import time
+            start_time = time.time()
+            
+            # Extract user message from WhatsApp payload
+            user_message = ""
+            try:
+                message_data = payload["entry"][0]["changes"][0]["value"]["messages"][0]
+                if message_data["type"] == "text":
+                    user_message = message_data["text"]["body"]
+                elif message_data["type"] == "audio":
+                    # For audio messages, we'd need to transcribe - for now store placeholder
+                    user_message = "[Audio message received]"
+                elif message_data["type"] in ["image", "document"]:
+                    user_message = f"[{message_data['type'].title()} message received]"
+            except Exception:
+                user_message = "[Unable to extract message content]"
+            
+            # Save user message transcript
+            service.save_transcript_fire_and_forget(
+                session_id=active_session.session_id,
+                client_phone=client_phone,
+                message_content=user_message,
+                message_type="user",
+                tokens_used=None,
+                processing_time_ms=None
+            )
+            
+            # Save AI response transcript
+            processing_time_ms = int((time.time() - start_time) * 1000)
+            service.save_transcript_fire_and_forget(
+                session_id=active_session.session_id,
+                client_phone=client_phone,
+                message_content=agent_reply,
+                message_type="assistant",
+                tokens_used=result.get("tokens_used", None),
+                processing_time_ms=processing_time_ms
+            )
+
     # Reply to WhatsApp directly
     if agent_reply and getattr(Config, "WHATSAPP_TOKEN", None) and getattr(Config, "WHATSAPP_PHONE_ID", None):
         headers = {

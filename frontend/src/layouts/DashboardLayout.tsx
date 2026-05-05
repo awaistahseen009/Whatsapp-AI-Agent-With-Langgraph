@@ -9,9 +9,14 @@ import {
   Activity,
   LogOut,
   Menu,
-  X
+  X,
+  User,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import SecuritySetupModal from '../components/SecuritySetupModal';
+
+import { Shield } from 'lucide-react';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', icon: Activity, path: '/' },
@@ -20,6 +25,9 @@ const NAV_ITEMS = [
   { name: 'Properties', icon: Building2, path: '/properties' },
   { name: 'Meetings', icon: Calendar, path: '/meetings' },
   { name: 'Escalations', icon: AlertTriangle, path: '/escalations' },
+  { name: 'Agents', icon: Shield, path: '/agents', ownerOnly: true },
+  { name: 'System Logs', icon: FileText, path: '/system-logs', ownerOnly: true },
+  { name: 'Profile', icon: User, path: '/profile' },
 ];
 
 export default function DashboardLayout() {
@@ -55,7 +63,7 @@ export default function DashboardLayout() {
           </div>
           
           <nav className="mt-8 flex-1 px-4 space-y-1">
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.filter(item => !item.ownerOnly || user?.role === 'owner').map((item) => (
               <NavLink
                 key={item.name}
                 to={item.path}
@@ -111,6 +119,8 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+
+      <SecuritySetupModal />
     </div>
   );
 }

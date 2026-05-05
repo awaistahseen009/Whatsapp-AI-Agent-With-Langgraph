@@ -35,6 +35,17 @@ async def get_meeting(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meeting not found")
     return meeting.model_dump()
 
+@meeting_router.get("/{meeting_id}/details")
+async def get_meeting_details(
+    meeting_id: str,
+    token_data: dict = Depends(AccessTokenBearer()),
+    session: AsyncSession = Depends(get_session),
+):
+    meeting_details = await service.get_meeting_details(meeting_id, session)
+    if not meeting_details:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meeting not found")
+    return meeting_details
+
 
 @meeting_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_meeting(
@@ -64,7 +75,6 @@ async def cancel_meeting(
     meeting_id: str,
     reason: str = "Cancelled by admin",
     token_data: dict = Depends(AccessTokenBearer()),
-    role_check: dict = Depends(RoleChecker(["owner"])),
     session: AsyncSession = Depends(get_session),
 ):
     meeting = await service.cancel_meeting(meeting_id, reason, session)
