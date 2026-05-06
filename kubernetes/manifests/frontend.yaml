@@ -1,0 +1,67 @@
+# ConfigMap: holds the non-sensitive frontend env var.
+# VITE_API_URL points to the backend ingress host with /api prefix.
+# This is baked into the React bundle at build time via Vite —
+# at runtime nginx just serves static files so env vars don't
+# get re-evaluated. If you change this you must rebuild the image.
+#
+# Deployment: pulls awaistahseen009/riley-frontend:0.0.01
+# nginx serves the React build on port 80.
+# 2 replicas for availability — frontend pods are very lightweight.
+#
+# Service: ClusterIP on port 80.
+# Ingress routes reporider.live → frontend-service:80 → pod:80
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: riley
+data:
+  VITE_API_URL: "https://api.reporider.live/api"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: riley
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: awaistahseen009/riley-frontend:0.0.01
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: riley
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80

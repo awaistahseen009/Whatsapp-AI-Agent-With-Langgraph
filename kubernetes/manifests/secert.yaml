@@ -1,0 +1,66 @@
+# Fill each value with: echo -n "yourvalue" | base64
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: riley-secrets
+  namespace: riley
+type: Opaque
+data:
+  # ─── LLM ──────────────────────────────────────────────────────────────
+  GROQ_API_KEY: <base64>
+  GROQ_MODEL: <base64>
+  ANTHROPIC_API_KEY: <base64>
+  ANTHROPIC_MODEL: <base64>
+  OPENAI_API_KEY: <base64>
+  OCR_MODEL: <base64>
+
+  # ─── Database ─────────────────────────────────────────────────────────
+  # format: postgresql+asyncpg://user:pass@postgresql-service:5432/riley
+  DATABASE_URL: <base64>
+  # same connection string used by langgraph checkpointer
+  LANGGRAPH_CHECKPOINT_DB_URL: <base64>
+
+  # ─── Redis ────────────────────────────────────────────────────────────
+  # format: redis://redis-service:6379
+  REDIS_HOST: <base64>
+  REDIS_PORT: <base64>
+
+  # ─── ChromaDB ─────────────────────────────────────────────────────────
+  # CHROMA_HOST value: chroma-service (kubernetes service name)
+  # CHROMA_PORT value: 8000
+  CHROMA_HOST: <base64>
+  CHROMA_PORT: <base64>
+
+  # ─── Auth ─────────────────────────────────────────────────────────────
+  JWT_KEY: <base64>
+  JWT_ALGORITHM: <base64>
+
+  # ─── WhatsApp ─────────────────────────────────────────────────────────
+  WHATSAPP_TOKEN: <base64>
+  WHATSAPP_PHONE_ID: <base64>
+  WHATSAPP_VERIFY_TOKEN: <base64>
+
+  # ─── Zoom ─────────────────────────────────────────────────────────────
+  ZOOM_CLIENT_ID: <base64>
+  ZOOM_CLIENT_SECRET: <base64>
+  ZOOM_ACCOUNT_ID: <base64>
+
+  # ─── Google Calendar ──────────────────────────────────────────────────
+  GOOGLE_PROJECT_ID: <base64>
+  GOOGLE_PRIVATE_KEY_ID: <base64>
+  # private key has newlines — base64 the entire PEM block including headers
+  GOOGLE_PRIVATE_KEY: <base64>
+  GOOGLE_CLIENT_EMAIL: <base64>
+  GOOGLE_CLIENT_ID: <base64>
+  GOOGLE_TOKEN_URI: <base64>
+  GOOGLE_CALENDAR_ID: <base64>
+  GOOGLE_CALENDAR_OWNER_EMAIL: <base64>
+
+  # ─── ElevenLabs TTS ───────────────────────────────────────────────────
+  ELEVEN_LABS_API_KEY: <base64>
+  ELEVEN_LABS_MODEL_ID: <base64>
+  ELEVEN_LABS_VOICE_ID: <base64>
+
+  # ─── Misc ─────────────────────────────────────────────────────────────
+  AGENT_TIMEZONE: <base64>

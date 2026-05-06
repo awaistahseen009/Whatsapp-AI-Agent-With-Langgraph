@@ -1,0 +1,83 @@
+# PVC: 5GB for ChromaDB's vector data — client memories, company
+# knowledge chunks, document chunks. This is your long-term memory store.
+# Losing this means the agent forgets everything about every client.
+#
+# Deployment: chromadb/chroma official image. Mounts PVC at /chroma/chroma
+# which is where Chroma stores its SQLite index and vector files.
+# IS_PERSISTENT=TRUE tells Chroma to write to disk not memory only.
+#
+# Service: ClusterIP. Backend and workers connect via
+# CHROMA_HOST=chroma-service and CHROMA_PORT=8000.
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chroma-pvc
+  namespace: riley
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chromadb
+  namespace: riley
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chromadb
+  template:
+    metadata:
+      labels:
+        app: chromadb
+    spec:
+      containers:
+        - name: chromadb
+          image: chromadb/chroma:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: IS_PERSISTENT
+              value: "TRUE"
+            - name: PERSIST_DIRECTORY
+              value: /chroma/chroma
+            - name: ANONYMIZED_TELEMETRY
+              value: "FALSE"
+          volumeMounts:
+            - name: chroma-storage
+              mountPath: /chroma/chroma
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/heartbeat
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+      volumes:
+        - name: chroma-storage
+          persistentVolumeClaim:
+            claimName: chroma-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chroma-service
+  namespace: riley
+spec:
+  type: ClusterIP
+  selector:
+    app: chromadb
+  ports:
+    - port: 8000
+      targetPort: 8000

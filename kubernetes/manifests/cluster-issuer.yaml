@@ -1,0 +1,21 @@
+# Tells cert-manager to use Let's Encrypt production server.
+# http01 challenge means cert-manager temporarily exposes a
+# path on your domain that Let's Encrypt hits to verify you
+# own the domain. This happens automatically — you don't do anything.
+# Replace email with your real email — Let's Encrypt uses it
+# to notify you of expiry if auto-renewal ever fails.
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: replace-your-email-here@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            class: nginx

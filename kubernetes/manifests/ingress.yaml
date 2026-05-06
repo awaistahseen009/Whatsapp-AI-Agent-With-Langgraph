@@ -1,0 +1,59 @@
+# Routes:
+#   reporider.live        → frontend-service:80  (React dashboard)
+#   api.reporider.live    → backend-service:80   (FastAPI + webhooks)
+#
+# proxy-body-size: 20m — allows document uploads up to 20MB
+# which matches document size limit in document_node.
+#
+# proxy-read-timeout: 120 — gives LangGraph runs up to 120 seconds
+# before nginx gives up. WhatsApp expects 200 in 3 seconds but
+# your worker handles that — the webhook just enqueues and returns.
+# The 120s timeout is for the dashboard API calls which can be longer.
+#
+# cert-manager.io/cluster-issuer: letsencrypt-prod — cert-manager
+# watches this annotation and automatically gets a free TLS cert
+# from Let's Encrypt for both hosts. Renews automatically before expiry.
+# You need cert-manager installed on your cluster first.
+#
+# tls section tells nginx which secret holds the certificate — cert-manager
+# creates and populates riley-tls automatically.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: riley-ingress
+  namespace: riley
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - reporider.live
+        - api.reporider.live
+      secretName: riley-tls
+  rules:
+    - host: reporider.live
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80
+    - host: api.reporider.live
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 80

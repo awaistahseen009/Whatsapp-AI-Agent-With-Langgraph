@@ -1,0 +1,55 @@
+# Same image as backend — same codebase, different entrypoint.
+# command overrides the Dockerfile CMD and starts an RQ worker
+# instead of uvicorn. Workers pull jobs from redis-service:6379
+# across the messages, documents, and ocr queues.
+#
+# No Service — nothing talks to workers, workers talk to others.
+# No ports — workers don't listen for connections.
+# No readinessProbe — no HTTP endpoint to probe.
+#
+# Higher memory limit than backend because workers run LangGraph,
+# load ChromaDB client, process PDFs with PyMuPDF, and run
+# full LLM inference chains — all memory hungry operations.
+#
+# 3 replicas means 3 simultaneous WhatsApp conversations can be
+# processed in parallel. Scale up if queue depth grows.
+
+aapiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: riley
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: awaistahseen009/riley-backend:0.0.01
+          command:
+            - "python"
+            - "-m"
+            - "celery"
+            - "-A"
+            - "src.worker.celery_app"
+            - "worker"
+            - "-l"
+            - "info"
+            - "-P"
+            - "threads"
+          envFrom:
+            - secretRef:
+                name: riley-secrets
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
