@@ -18,8 +18,6 @@ services:
     image: awaistahseen009/riley-backend:v1.0.0
     container_name: riley-worker
     command: ["python", "-m", "celery", "-A", "src.worker.celery_app", "worker", "-l", "info", "-P", "threads"]
-    env_file:
-      - .env
     depends_on:
       - backend
 
