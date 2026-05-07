@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: awaistahseen009/riley-backend:v1.0.0
+          image: awaistahseen009/riley-backend:v1.0.1
           ports:
             - containerPort: 8000
           envFrom:

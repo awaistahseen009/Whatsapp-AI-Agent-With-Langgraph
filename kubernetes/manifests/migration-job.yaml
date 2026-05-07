@@ -9,7 +9,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migration
-          image: awaistahseen009/riley-backend:v1.0.0
+          image: awaistahseen009/riley-backend:v1.0.1
           command: ["alembic", "upgrade", "head"]
           # Use envFrom to pull EVERYTHING inside the secret
           envFrom:
