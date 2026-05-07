@@ -11,7 +11,6 @@ import sqlalchemy as sa
 import sqlmodel
 from sqlmodel import SQLModel
 from sqlalchemy.dialects import postgresql
-from sqlalchemy import text
 
 revision: str = '0258928eafd9'
 down_revision: Union[str, Sequence[str], None] = None
@@ -19,32 +18,20 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def _create_enum_if_not_exists(conn, name, *values):
-    """Helper to safely create enums only if they don't exist."""
-    exists = conn.execute(
-        text("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = :name)"),
-        {"name": name}
-    ).scalar()
-    if not exists:
-        vals = ", ".join(f"'{v}'" for v in values)
-        conn.execute(text(f"CREATE TYPE {name} AS ENUM ({vals})"))
-
-
 def upgrade() -> None:
-    conn = op.get_bind()
-
-    # Safely create all enums first
-    _create_enum_if_not_exists(conn, 'clientstatus', 'NEW', 'SERIOUS', 'CONVERTED', 'LOST')
-    _create_enum_if_not_exists(conn, 'clientintent', 'BUY', 'INVEST', 'RENT')
-    _create_enum_if_not_exists(conn, 'companydoctype', 'PROPERTY_LISTING', 'AREA_GUIDE', 'POLICY', 'FAQ', 'DEVELOPER_PROFILE', 'LEGAL')
-    _create_enum_if_not_exists(conn, 'retrystatus', 'PENDING', 'RETRIED', 'ABANDONED')
-    _create_enum_if_not_exists(conn, 'propertytype', 'APARTMENT', 'HOUSE', 'PLOT', 'VILLA', 'COMMERCIAL')
-    _create_enum_if_not_exists(conn, 'listingtype', 'SALE', 'RENT')
-    _create_enum_if_not_exists(conn, 'clientdoctype', 'SALE_DEED', 'NOC', 'BANK_STATEMENT', 'CNIC', 'FLOOR_PLAN', 'BROCHURE', 'OTHER')
-    _create_enum_if_not_exists(conn, 'storagestatus', 'INJECTED', 'CHUNKED')
-    _create_enum_if_not_exists(conn, 'escalationstatus', 'PENDING', 'RESOLVED', 'DISMISSED')
-    _create_enum_if_not_exists(conn, 'meetingtype', 'VIRTUAL_CONSULTATION', 'PROPERTY_TOUR', 'DOCUMENT_SIGNING', 'FOLLOWUP')
-    _create_enum_if_not_exists(conn, 'meetingstatus', 'SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW')
+    # Safely create all enums using native PostgreSQL IF NOT EXISTS
+    op.execute("CREATE TYPE IF NOT EXISTS clientstatus AS ENUM ('NEW', 'SERIOUS', 'CONVERTED', 'LOST')")
+    op.execute("CREATE TYPE IF NOT EXISTS clientintent AS ENUM ('BUY', 'INVEST', 'RENT')")
+    op.execute("CREATE TYPE IF NOT EXISTS companydoctype AS ENUM ('PROPERTY_LISTING', 'AREA_GUIDE', 'POLICY', 'FAQ', 'DEVELOPER_PROFILE', 'LEGAL')")
+    op.execute("CREATE TYPE IF NOT EXISTS retrystatus AS ENUM ('PENDING', 'RETRIED', 'ABANDONED')")
+    op.execute("CREATE TYPE IF NOT EXISTS propertytype AS ENUM ('APARTMENT', 'HOUSE', 'PLOT', 'VILLA', 'COMMERCIAL')")
+    op.execute("CREATE TYPE IF NOT EXISTS listingtype AS ENUM ('SALE', 'RENT')")
+    op.execute("CREATE TYPE IF NOT EXISTS clientdoctype AS ENUM ('SALE_DEED', 'NOC', 'BANK_STATEMENT', 'CNIC', 'FLOOR_PLAN', 'BROCHURE', 'OTHER')")
+    op.execute("CREATE TYPE IF NOT EXISTS storagestatus AS ENUM ('INJECTED', 'CHUNKED')")
+    op.execute("CREATE TYPE IF NOT EXISTS escalationstatus AS ENUM ('PENDING', 'RESOLVED', 'DISMISSED')")
+    op.execute("CREATE TYPE IF NOT EXISTS meetingtype AS ENUM ('VIRTUAL_CONSULTATION', 'PROPERTY_TOUR', 'DOCUMENT_SIGNING', 'FOLLOWUP')")
+    op.execute("CREATE TYPE IF NOT EXISTS meetingstatus AS ENUM ('SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW')")
+    op.execute("CREATE TYPE IF NOT EXISTS userrole AS ENUM ('owner', 'agent')")
 
     op.create_table('client',
     sa.Column('phone_num', sa.VARCHAR(), nullable=False),
@@ -118,6 +105,7 @@ def upgrade() -> None:
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('password_hash', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('role', sa.Enum('owner', 'agent', name='userrole', create_type=False), server_default='agent', nullable=False),
     sa.Column('created_at', postgresql.TIMESTAMP(), nullable=False),
     sa.Column('updated_at', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -192,8 +180,19 @@ def upgrade() -> None:
     sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), nullable=False),
     sa.Column('cancelled_at', postgresql.TIMESTAMP(timezone=True), nullable=True),
     sa.Column('cancellation_reason', sa.TEXT(), nullable=True),
+    sa.Column('meeting_format', sa.VARCHAR(), server_default='virtual', nullable=False),
+    sa.Column('conversation_summary', sa.TEXT(), nullable=True),
     sa.ForeignKeyConstraint(['client_phone'], ['client.phone_num'], ),
     sa.PrimaryKeyConstraint('meeting_id')
+    )
+    op.create_table('security_questions',
+    sa.Column('question_id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('question', sa.TEXT(), nullable=False),
+    sa.Column('answer_hash', sa.TEXT(), nullable=False),
+    sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('question_id')
     )
     op.create_table('token_logs',
     sa.Column('log_id', sa.UUID(), nullable=False),
@@ -221,11 +220,31 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['session_id'], ['conversation_sessions.session_id'], ),
     sa.PrimaryKeyConstraint('log_id')
     )
+    op.create_table('transcripts',
+    sa.Column('transcript_id', sa.UUID(), nullable=False),
+    sa.Column('session_id', sa.UUID(), nullable=False),
+    sa.Column('client_phone', sa.VARCHAR(), nullable=False),
+    sa.Column('message_content', sa.TEXT(), nullable=False),
+    sa.Column('message_type', sa.VARCHAR(), nullable=False),
+    sa.Column('timestamp', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('tokens_used', sa.INTEGER(), nullable=True),
+    sa.Column('processing_time_ms', sa.INTEGER(), nullable=True),
+    sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['client_phone'], ['client.phone_num'], ),
+    sa.ForeignKeyConstraint(['session_id'], ['conversation_sessions.session_id'], ),
+    sa.PrimaryKeyConstraint('transcript_id')
+    )
+    op.create_index('ix_transcripts_session_id', 'transcripts', ['session_id'], unique=False)
+    op.create_index('ix_transcripts_client_phone', 'transcripts', ['client_phone'], unique=False)
 
 
 def downgrade() -> None:
+    op.drop_index('ix_transcripts_client_phone', table_name='transcripts')
+    op.drop_index('ix_transcripts_session_id', table_name='transcripts')
+    op.drop_table('transcripts')
     op.drop_table('tool_execution_logs')
     op.drop_table('token_logs')
+    op.drop_table('security_questions')
     op.drop_table('meetings')
     op.drop_table('escalations')
     op.drop_table('conversation_sessions')
