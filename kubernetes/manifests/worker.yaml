@@ -14,7 +14,7 @@
 # 3 replicas means 3 simultaneous WhatsApp conversations can be
 # processed in parallel. Scale up if queue depth grows.
 
-aapiVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: worker
