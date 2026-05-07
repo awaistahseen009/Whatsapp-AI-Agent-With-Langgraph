@@ -9,7 +9,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel
-from sqlmodel import SQLModel
 from sqlalchemy.dialects import postgresql
 
 revision: str = '0258928eafd9'
@@ -19,20 +18,27 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Safely create all enums using native PostgreSQL IF NOT EXISTS
-    op.execute("CREATE TYPE IF NOT EXISTS clientstatus AS ENUM ('NEW', 'SERIOUS', 'CONVERTED', 'LOST')")
-    op.execute("CREATE TYPE IF NOT EXISTS clientintent AS ENUM ('BUY', 'INVEST', 'RENT')")
-    op.execute("CREATE TYPE IF NOT EXISTS companydoctype AS ENUM ('PROPERTY_LISTING', 'AREA_GUIDE', 'POLICY', 'FAQ', 'DEVELOPER_PROFILE', 'LEGAL')")
-    op.execute("CREATE TYPE IF NOT EXISTS retrystatus AS ENUM ('PENDING', 'RETRIED', 'ABANDONED')")
-    op.execute("CREATE TYPE IF NOT EXISTS propertytype AS ENUM ('APARTMENT', 'HOUSE', 'PLOT', 'VILLA', 'COMMERCIAL')")
-    op.execute("CREATE TYPE IF NOT EXISTS listingtype AS ENUM ('SALE', 'RENT')")
-    op.execute("CREATE TYPE IF NOT EXISTS clientdoctype AS ENUM ('SALE_DEED', 'NOC', 'BANK_STATEMENT', 'CNIC', 'FLOOR_PLAN', 'BROCHURE', 'OTHER')")
-    op.execute("CREATE TYPE IF NOT EXISTS storagestatus AS ENUM ('INJECTED', 'CHUNKED')")
-    op.execute("CREATE TYPE IF NOT EXISTS escalationstatus AS ENUM ('PENDING', 'RESOLVED', 'DISMISSED')")
-    op.execute("CREATE TYPE IF NOT EXISTS meetingtype AS ENUM ('VIRTUAL_CONSULTATION', 'PROPERTY_TOUR', 'DOCUMENT_SIGNING', 'FOLLOWUP')")
-    op.execute("CREATE TYPE IF NOT EXISTS meetingstatus AS ENUM ('SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW')")
-    op.execute("CREATE TYPE IF NOT EXISTS userrole AS ENUM ('owner', 'agent')")
+    # Create all enum types using PostgreSQL's native ENUM via SQLAlchemy (idempotent)
+    enums = [
+        ('clientstatus', ['NEW', 'SERIOUS', 'CONVERTED', 'LOST']),
+        ('clientintent', ['BUY', 'INVEST', 'RENT']),
+        ('companydoctype', ['PROPERTY_LISTING', 'AREA_GUIDE', 'POLICY', 'FAQ', 'DEVELOPER_PROFILE', 'LEGAL']),
+        ('retrystatus', ['PENDING', 'RETRIED', 'ABANDONED']),
+        ('propertytype', ['APARTMENT', 'HOUSE', 'PLOT', 'VILLA', 'COMMERCIAL']),
+        ('listingtype', ['SALE', 'RENT']),
+        ('clientdoctype', ['SALE_DEED', 'NOC', 'BANK_STATEMENT', 'CNIC', 'FLOOR_PLAN', 'BROCHURE', 'OTHER']),
+        ('storagestatus', ['INJECTED', 'CHUNKED']),
+        ('escalationstatus', ['PENDING', 'RESOLVED', 'DISMISSED']),
+        ('meetingtype', ['VIRTUAL_CONSULTATION', 'PROPERTY_TOUR', 'DOCUMENT_SIGNING', 'FOLLOWUP']),
+        ('meetingstatus', ['SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']),
+        ('userrole', ['owner', 'agent']),
+    ]
+    bind = op.get_bind()
+    for name, values in enums:
+        enum_type = postgresql.ENUM(*values, name=name, create_type=False)
+        enum_type.create(bind, checkfirst=True)
 
+    # Create all tables (create_type=False ensures we don't recreate enums)
     op.create_table('client',
     sa.Column('phone_num', sa.VARCHAR(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -239,6 +245,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Drop all tables (foreign keys handled by cascade, but we drop in reverse order)
     op.drop_index('ix_transcripts_client_phone', table_name='transcripts')
     op.drop_index('ix_transcripts_session_id', table_name='transcripts')
     op.drop_table('transcripts')
@@ -255,3 +262,14 @@ def downgrade() -> None:
     op.drop_table('error_logs')
     op.drop_table('company_documents')
     op.drop_table('client')
+
+    # Drop all enums (safe because no tables depend on them anymore)
+    bind = op.get_bind()
+    enum_names = [
+        'clientstatus', 'clientintent', 'companydoctype', 'retrystatus',
+        'propertytype', 'listingtype', 'clientdoctype', 'storagestatus',
+        'escalationstatus', 'meetingtype', 'meetingstatus', 'userrole'
+    ]
+    for name in enum_names:
+        enum_type = postgresql.ENUM(name=name, create_type=False)
+        enum_type.drop(bind, checkfirst=True)
