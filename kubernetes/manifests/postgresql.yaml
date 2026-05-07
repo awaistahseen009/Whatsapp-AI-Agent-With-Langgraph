@@ -1,10 +1,9 @@
-# Creating PVC
+# PVC
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgresql-pvc
   namespace: riley
-
 spec:
   accessModes:
     - ReadWriteOnce
@@ -12,16 +11,15 @@ spec:
     requests:
       storage: 10Gi
 
-# Deployment Object
---- 
+---
+# Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgresql
   namespace: riley
-
 spec:
-  replicas: 2
+  replicas: 1  # Changed from 2 to 1 – PostgreSQL with PVC should not run multiple pods
   selector:
     matchLabels:
       app: postgresql
@@ -31,53 +29,53 @@ spec:
         app: postgresql
     spec:
       containers:
-        - name: postgresql
-          image: postgres:16
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_DB
-              value: riley
-            - name: POSTGRES_USER
-              value: postgres
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: riley-secrets
-                  key: JWT_KEY
-          volumeMounts:
-            - name: postgresql-storage
-              mountPath: /var/lib/postgresql/data
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
-              memory: "1Gi"
-              cpu: "500m"
-          livenessProbe:
-            exec:
-              command: ["pg_isready", "-U", "postgres"]
-            initialDelaySeconds: 30
-            periodSeconds: 10
-      volumes:
+      - name: postgresql
+        image: postgres:16
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: riley
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: riley-secrets
+              key: POSTGRES_PASSWORD   
+        - name: PGDATA   
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
         - name: postgresql-storage
-          persistentVolumeClaim:
-            claimName: postgresql-pvc
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-U", "postgres"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: postgresql-storage
+        persistentVolumeClaim:
+          claimName: postgresql-pvc
 
 ---
-# Creating DB Service
-
+# Service
 apiVersion: v1
 kind: Service
 metadata:
   name: postgresql-service
   namespace: riley
-
 spec:
   type: ClusterIP
   selector:
     app: postgresql
   ports:
-    - port: 5432
-      targetPort: 5432
+  - port: 5432
+    targetPort: 5432

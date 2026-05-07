@@ -14,7 +14,7 @@ metadata:
   name: backend
   namespace: riley
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: backend
@@ -33,23 +33,23 @@ spec:
                 name: riley-secrets
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              memory: "256Mi"
+              cpu: "100m"
             limits:
-              memory: "1Gi"
+              memory: "512Mi"
               cpu: "500m"
           livenessProbe:
             httpGet:
-              path: /health
+              path: /
               port: 8000
-            initialDelaySeconds: 30
+            initialDelaySeconds: 45
             periodSeconds: 15
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /health
+              path: /
               port: 8000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 20
             periodSeconds: 5
             failureThreshold: 2
 ---
@@ -63,5 +63,5 @@ spec:
   selector:
     app: backend
   ports:
-    - port: 80
+    - port: 8000
       targetPort: 8000
