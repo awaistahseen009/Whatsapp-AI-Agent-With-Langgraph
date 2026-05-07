@@ -9,11 +9,9 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migration
-          image: awaistahseen009/riley-backend:v1.0.1
+          image: awaistahseen009/riley-backend:v1.0.0
           command: ["alembic", "upgrade", "head"]
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: riley-secrets
-                  key: DATABASE_URL
+          # Use envFrom to pull EVERYTHING inside the secret
+          envFrom:
+            - secretRef:
+                name: riley-secrets

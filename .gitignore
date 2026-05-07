@@ -8,3 +8,6 @@ venv
 backend/venv
 dist
 .env.local
+secret.yaml
+kubernetes\manifests\secret.yaml
+kubernetes\manifests\secret.yaml
