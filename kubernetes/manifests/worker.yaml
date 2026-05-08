@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: worker
-          image: awaistahseen009/riley-backend:v1.1.0
+          image: awaistahseen009/riley-backend:v1.1.1
           command:
             - "python"
             - "-m"
