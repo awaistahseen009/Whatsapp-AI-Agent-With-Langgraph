@@ -24,7 +24,7 @@ async def list_escalations(
     return [e.model_dump() for e in escalations]
 
 
-@escalation_router.get("/{escalation_id}")
+@escalation_router.get("/{escalation_id}/")
 async def get_escalation(
     escalation_id: str,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -36,7 +36,7 @@ async def get_escalation(
     return esc.model_dump()
 
 
-@escalation_router.put("/{escalation_id}/resolve")
+@escalation_router.put("/{escalation_id}/resolve/")
 async def resolve_escalation(
     escalation_id: str,
     data: EscalationResolveSchema,

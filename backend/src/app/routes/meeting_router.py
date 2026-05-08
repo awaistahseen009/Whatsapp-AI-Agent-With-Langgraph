@@ -24,7 +24,7 @@ async def list_meetings(
     return [m.model_dump() for m in meetings]
 
 
-@meeting_router.get("/{meeting_id}")
+@meeting_router.get("/{meeting_id}/")
 async def get_meeting(
     meeting_id: str,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -35,7 +35,7 @@ async def get_meeting(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meeting not found")
     return meeting.model_dump()
 
-@meeting_router.get("/{meeting_id}/details")
+@meeting_router.get("/{meeting_id}/details/")
 async def get_meeting_details(
     meeting_id: str,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -57,7 +57,7 @@ async def create_meeting(
     return meeting.model_dump()
 
 
-@meeting_router.put("/{meeting_id}")
+@meeting_router.put("/{meeting_id}/")
 async def update_meeting(
     meeting_id: str,
     data: MeetingUpdateSchema,
@@ -70,7 +70,7 @@ async def update_meeting(
     return meeting.model_dump()
 
 
-@meeting_router.delete("/{meeting_id}")
+@meeting_router.delete("/{meeting_id}/")
 async def cancel_meeting(
     meeting_id: str,
     reason: str = "Cancelled by admin",

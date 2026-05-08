@@ -23,7 +23,7 @@ async def list_clients(
     return [c.model_dump() for c in clients]
 
 
-@client_router.get("/{phone}")
+@client_router.get("/{phone}/")
 async def get_client(
     phone: str,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -35,7 +35,7 @@ async def get_client(
     return client.model_dump()
 
 
-@client_router.get("/{phone}/views")
+@client_router.get("/{phone}/views/")
 async def get_client_views(
     phone: str,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -45,7 +45,7 @@ async def get_client_views(
     return [v.model_dump() for v in views]
 
 
-@client_router.get("/stats/monthly")
+@client_router.get("/stats/monthly/")
 async def get_monthly_client_stats(
     session: AsyncSession = Depends(get_session),
     token_data: dict = Depends(AccessTokenBearer()),

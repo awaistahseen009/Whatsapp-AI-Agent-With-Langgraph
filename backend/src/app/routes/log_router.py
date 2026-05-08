@@ -9,7 +9,7 @@ service = LogService()
 log_router = APIRouter()
 
 
-@log_router.get("/tokens")
+@log_router.get("/tokens/")
 async def list_token_logs(
     client_phone: Optional[str] = None,
     offset: int = 0,
@@ -21,7 +21,7 @@ async def list_token_logs(
     return [l.model_dump() for l in logs]
 
 
-@log_router.get("/tools")
+@log_router.get("/tools/")
 async def list_tool_logs(
     client_phone: Optional[str] = None,
     tool_name: Optional[str] = None,
@@ -35,7 +35,7 @@ async def list_tool_logs(
     return [l.model_dump() for l in logs]
 
 
-@log_router.get("/errors")
+@log_router.get("/errors/")
 async def list_error_logs(
     client_phone: Optional[str] = None,
     offset: int = 0,

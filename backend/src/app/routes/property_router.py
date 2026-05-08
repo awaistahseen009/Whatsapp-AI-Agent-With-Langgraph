@@ -11,7 +11,7 @@ service = PropertyService()
 property_router = APIRouter()
 
 
-@property_router.get("/count")
+@property_router.get("/count/")
 async def get_properties_count(
     city: Optional[str] = None,
     property_type: Optional[str] = None,
@@ -50,7 +50,7 @@ async def list_properties(
     return [p.model_dump() for p in props]
 
 
-@property_router.get("/{property_id}")
+@property_router.get("/{property_id}/")
 async def get_property(
     property_id: str,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -72,7 +72,7 @@ async def create_property(
     return prop.model_dump()
 
 
-@property_router.get("/stats/monthly")
+@property_router.get("/stats/monthly/")
 async def get_monthly_property_stats(
     token_data: dict = Depends(RoleChecker(["owner", "agent"])),
     session: AsyncSession = Depends(get_session),
@@ -97,7 +97,7 @@ async def get_monthly_property_stats(
     }
 
 
-@property_router.put("/{property_id}")
+@property_router.put("/{property_id}/")
 async def update_property(
     property_id: str,
     data: PropertyUpdateSchema,
@@ -110,7 +110,7 @@ async def update_property(
     return prop.model_dump()
 
 
-@property_router.delete("/{property_id}")
+@property_router.delete("/{property_id}/")
 async def delete_property(
     property_id: str,
     token_data: dict = Depends(RoleChecker(["owner"])),

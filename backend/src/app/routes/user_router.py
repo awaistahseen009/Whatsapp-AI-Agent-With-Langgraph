@@ -22,7 +22,7 @@ REFRESH_TOKEN_EXPIRY = 2  # In days
 
 # ─── Owner-only: create agent accounts ────────────────────────────────────────
 
-@auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
+@auth_router.post("/signup/", status_code=status.HTTP_201_CREATED)
 async def create_user_account(
     user_data: UserCreationSchema,
     token_data: dict = Depends(RoleChecker(["owner"])),
@@ -37,7 +37,7 @@ async def create_user_account(
     new_user: User = await service.create_user(user_data, session)
     return new_user.model_dump()
 
-@auth_router.get("/agents")
+@auth_router.get("/agents/")
 async def get_all_agents(
     token_data: dict = Depends(RoleChecker(["owner"])),
     session: AsyncSession = Depends(get_session)
@@ -62,7 +62,7 @@ async def get_all_agents(
 
 # ─── Login / Logout / Token ──────────────────────────────────────────────────
 
-@auth_router.get("/refresh_token")
+@auth_router.get("/refresh_token/")
 async def get_new_access_token(token_data: dict = Depends(RefreshTokenBearer())):
     if datetime.fromisoformat(token_data['expiry']) > datetime.now():
         return JSONResponse(
@@ -75,7 +75,7 @@ async def get_new_access_token(token_data: dict = Depends(RefreshTokenBearer()))
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please login again")
 
 
-@auth_router.post("/login")
+@auth_router.post("/login/")
 async def user_login(
     user_data: UserLoginSchema,
     session: AsyncSession = Depends(get_session)
@@ -120,7 +120,7 @@ async def user_login(
     )
 
 
-@auth_router.post("/logout")
+@auth_router.post("/logout/")
 async def revoke_token(logout_data: UserLogoutSchema = Body(...), token_data: dict = Depends(AccessTokenBearer())):
     refresh_token = decode_token(logout_data.refresh_token)
     if refresh_token is None:
@@ -134,7 +134,7 @@ async def revoke_token(logout_data: UserLogoutSchema = Body(...), token_data: di
 
 # ─── Security Question ───────────────────────────────────────────────────────
 
-@auth_router.post("/set-question")
+@auth_router.post("/set-question/")
 async def set_question(
     security_schema: SecurityQuestionSchema,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -151,7 +151,7 @@ async def set_question(
     )
     return {"message": "Security question set successfully", "question_id": str(sq.question_id)}
 
-@auth_router.get("/has-security-question")
+@auth_router.get("/has-security-question/")
 async def has_security_question(
     token_data: dict = Depends(AccessTokenBearer()),
     session: AsyncSession = Depends(get_session)
@@ -170,7 +170,7 @@ async def has_security_question(
 
 # ─── Change Password ─────────────────────────────────────────────────────────
 
-@auth_router.post("/change-password")
+@auth_router.post("/change-password/")
 async def change_password(
     data: ChangePasswordSchema,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -193,7 +193,7 @@ async def change_password(
 
 # ─── Forgot Password Flow ────────────────────────────────────────────────────
 
-@auth_router.post("/forgot-password")
+@auth_router.post("/forgot-password/")
 async def forgot_password(
     data: ForgotPasswordSchema,
     session: AsyncSession = Depends(get_session)
@@ -207,7 +207,7 @@ async def forgot_password(
     return {"question": sq.question, "email": data.email}
 
 
-@auth_router.post("/reset-password")
+@auth_router.post("/reset-password/")
 async def reset_password(
     data: ResetPasswordSchema,
     session: AsyncSession = Depends(get_session)

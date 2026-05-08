@@ -17,7 +17,7 @@ chat_router = APIRouter()
 
 # ─── Session Listing (read-only) ──────────────────────────────────────────────
 
-@chat_router.get("/sessions")
+@chat_router.get("/sessions/")
 async def list_sessions(
     client_phone: Optional[str] = None,
     offset: int = 0,
@@ -29,7 +29,7 @@ async def list_sessions(
     return [s.model_dump() for s in sessions]
 
 
-@chat_router.get("/sessions/{session_id}")
+@chat_router.get("/sessions/{session_id}/")
 async def get_session_detail(
     session_id: str,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -40,7 +40,7 @@ async def get_session_detail(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     return conv_session.model_dump()
 
-@chat_router.get("/sessions/{session_id}/transcripts")
+@chat_router.get("/sessions/{session_id}/transcripts/")
 async def get_session_transcripts(
     session_id: str,
     token_data: dict = Depends(AccessTokenBearer()),
@@ -54,7 +54,7 @@ async def get_session_transcripts(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid session ID format")
 
-@chat_router.get("/stats/monthly")
+@chat_router.get("/stats/monthly/")
 async def get_monthly_session_stats(
     token_data: dict = Depends(AccessTokenBearer()),
     session: AsyncSession = Depends(get_session),
@@ -89,7 +89,7 @@ async def get_monthly_session_stats(
 
 # ─── Send message to AI agent ────────────────────────────────────────────────
 
-@chat_router.post("/send", response_model=ChatSendResponse)
+@chat_router.post("/send/", response_model=ChatSendResponse)
 async def send_message(
     request: Request, 
     data: ChatSendRequest,
@@ -195,7 +195,7 @@ async def send_message(
 
 # ─── WhatsApp Webhook (Meta Graph API) ───────────────────────────────────────
 
-@chat_router.get("/webhook")
+@chat_router.get("/webhook/")
 async def verify_webhook(
     request: Request,
     hub_mode: str = Query(None, alias="hub.mode"),
@@ -210,7 +210,7 @@ async def verify_webhook(
     raise HTTPException(status_code=403, detail="Verification token mismatch")
 
 
-@chat_router.post("/webhook")
+@chat_router.post("/webhook/")
 async def handle_whatsapp_webhook(request: Request):
     """
     Handles incoming messages from WhatsApp Cloud API.

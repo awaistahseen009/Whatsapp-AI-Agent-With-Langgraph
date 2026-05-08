@@ -32,7 +32,8 @@ app = FastAPI(
     title="Riley Estate API",
     description="Backend API for Riley Estate — real estate agency dashboard",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    redirect_slashes=False
 )
 
 app.add_middleware(
