@@ -24,11 +24,24 @@ metadata:
   name: riley-ingress
   namespace: riley
   annotations:
+    # Basic Config
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-body-size: "20m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # THE REPLACEMENT STRATEGY:
+    # 1. Force SSL (This usually forces the Proto header to https automatically)
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    
+    # 2. Tell Nginx to trust the headers coming from the Load Balancer
+    # (If your cloud provider uses a LoadBalancer, this is vital)
+    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+    
+    # 3. Enable HSTS via a clean boolean instead of a snippet
+    nginx.ingress.kubernetes.io/hsts: "true"
+    nginx.ingress.kubernetes.io/hsts-include-subdomains: "true"
 spec:
   ingressClassName: nginx
   tls:
