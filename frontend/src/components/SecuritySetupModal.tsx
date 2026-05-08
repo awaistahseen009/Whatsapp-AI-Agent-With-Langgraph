@@ -16,7 +16,7 @@ export default function SecuritySetupModal() {
     const checkSecurityStatus = async () => {
        try {
          if (user && !sessionStorage.getItem('security_skipped') && !sessionStorage.getItem('security_setup_done')) {
-            const response = await api.get('/auth/has-security-question');
+            const response = await api.get('/auth/has-security-question/');
             if (!response.data.has_security_question) {
                setIsOpen(true);
             } else {
@@ -41,7 +41,7 @@ export default function SecuritySetupModal() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/set-question', {
+      await api.post('/auth/set-question/', {
         question: securityQuestion,
         answer: securityAnswer
       });

@@ -63,13 +63,13 @@ export default function LogsPage() {
       let endpoint = '/logs';
       switch (activeTab) {
         case 'tokens':
-          endpoint += '/tokens';
+          endpoint += '/tokens/';
           break;
         case 'tools':
-          endpoint += '/tools';
+          endpoint += '/tools/';
           break;
         case 'errors':
-          endpoint += '/errors';
+          endpoint += '/errors/';
           break;
       }
       

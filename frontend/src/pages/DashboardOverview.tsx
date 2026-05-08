@@ -17,9 +17,9 @@ export default function DashboardOverview() {
     async function fetchStats() {
       try {
         const [clientsRes, propertiesRes, sessionsRes] = await Promise.all([
-          api.get('/clients'),
-          api.get('/properties?limit=10000'),
-          api.get('/chat/sessions')
+          api.get('/clients/'),
+          api.get('/properties/?limit=10000'),
+          api.get('/chat/sessions/')
         ]);
         
         const clientsArr = clientsRes.data || [];

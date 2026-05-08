@@ -25,7 +25,7 @@ export default function EscalationsPage() {
 
   const fetchEscalations = async () => {
     try {
-      const response = await api.get('/escalations');
+      const response = await api.get('/escalations/');
       setEscalations(response.data);
     } catch (error) {
       console.error('Failed to fetch escalations:', error);
@@ -36,7 +36,7 @@ export default function EscalationsPage() {
 
   const handleResolve = async (id: string, newStatus: 'resolved' | 'dismissed') => {
     try {
-      await api.put(`/escalations/${id}/resolve`, { status: newStatus, resolution_notes: 'Handled via dashboard' });
+      await api.put(`/escalations/${id}/resolve/`, { status: newStatus, resolution_notes: 'Handled via dashboard' });
       // Remove from UI
       setEscalations((prev) => prev.filter(e => e.escalation_id !== id));
     } catch (error) {

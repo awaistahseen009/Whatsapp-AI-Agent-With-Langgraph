@@ -30,7 +30,7 @@ export default function MeetingEditPage() {
 
   const fetchMeeting = async () => {
     try {
-      const response = await api.get(`/meetings/${id}/details`);
+      const response = await api.get(`/meetings/${id}/details/`);
       if (response.data) {
         setMeetingData({
           meeting: response.data,
@@ -52,7 +52,7 @@ export default function MeetingEditPage() {
   const handleStatusChange = async (newStatus: string) => {
     if (!meeting) return;
     try {
-      await api.put(`/meetings/${meeting.meeting_id}`, { status: newStatus });
+      await api.put(`/meetings/${meeting.meeting_id}/`, { status: newStatus });
       setMeeting({ ...meeting, status: newStatus });
     } catch (error) {
       console.error('Failed to change meeting status:', error);
@@ -62,7 +62,7 @@ export default function MeetingEditPage() {
   const cancelMeeting = async () => {
     if (!meeting || !window.confirm('Are you sure you want to cancel this meeting?')) return;
     try {
-      await api.delete(`/meetings/${meeting.meeting_id}`);
+      await api.delete(`/meetings/${meeting.meeting_id}/`);
       navigate('/meetings');
     } catch (error) {
       console.error('Failed to cancel meeting:', error);

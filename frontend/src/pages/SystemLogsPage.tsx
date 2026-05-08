@@ -48,13 +48,13 @@ export default function SystemLogsPage() {
     setLoading(true);
     try {
       if (activeTab === 'tokens') {
-        const res = await api.get('/logs/tokens');
+        const res = await api.get('/logs/tokens/');
         setTokenLogs(res.data);
       } else if (activeTab === 'tools') {
-        const res = await api.get('/logs/tools');
+        const res = await api.get('/logs/tools/');
         setToolLogs(res.data);
       } else if (activeTab === 'errors') {
-        const res = await api.get('/logs/errors');
+        const res = await api.get('/logs/errors/');
         setErrorLogs(res.data);
       }
     } catch (error) {

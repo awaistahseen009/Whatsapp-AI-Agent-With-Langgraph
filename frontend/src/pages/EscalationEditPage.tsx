@@ -27,7 +27,7 @@ export default function EscalationEditPage() {
 
   const fetchEscalation = async () => {
     try {
-      const response = await api.get('/escalations');
+      const response = await api.get('/escalations/');
       const found = response.data.find((e: Escalation) => e.escalation_id === id);
       if (found) {
         setEscalation(found);
@@ -45,7 +45,7 @@ export default function EscalationEditPage() {
   const handleResolve = async (newStatus: 'resolved' | 'dismissed') => {
     if (!escalation) return;
     try {
-      await api.put(`/escalations/${escalation.escalation_id}/resolve`, { status: newStatus, resolution_notes: 'Handled via dashboard edit page' });
+      await api.put(`/escalations/${escalation.escalation_id}/resolve/`, { status: newStatus, resolution_notes: 'Handled via dashboard edit page' });
       navigate('/escalations');
     } catch (error) {
       console.error('Failed to resolve escalation:', error);

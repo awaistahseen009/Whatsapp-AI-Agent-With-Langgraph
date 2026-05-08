@@ -23,7 +23,7 @@ export default function ChatSessionsPage() {
 
   const fetchSessions = async () => {
     try {
-      const response = await api.get('/chat/sessions');
+      const response = await api.get('/chat/sessions/');
       setSessions(response.data);
     } catch (error) {
       console.error('Failed to fetch sessions:', error);

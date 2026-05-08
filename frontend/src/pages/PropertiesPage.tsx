@@ -42,7 +42,7 @@ export default function PropertiesPage() {
 
   const fetchProperties = async () => {
     try {
-      const response = await api.get('/properties?limit=1000');
+      const response = await api.get('/properties/?limit=1000');
       setProperties(response.data);
     } catch (error) {
       console.error('Failed to fetch properties:', error);

@@ -62,7 +62,7 @@ export default function ClientDetailPage() {
     try {
       // Endpoint depends on if there's a GET /clients/:id or if we fetch all.
       // Easiest is to fetch all and filter if no specific GET exists.
-      const response = await api.get('/clients');
+      const response = await api.get('/clients/');
       const found = response.data.find((c: Client) => c.phone_num.replace('+', '') === id);
       if (found) {
         setClient(found);

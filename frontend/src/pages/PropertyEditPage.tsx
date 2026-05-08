@@ -48,7 +48,7 @@ export default function PropertyEditPage() {
 
   const fetchProperty = async () => {
     try {
-      const res = await api.get(`/properties/${id}`);
+      const res = await api.get(`/properties/${id}/`);
       if (res.data) {
         setFormData(res.data);
       }
@@ -88,9 +88,9 @@ export default function PropertyEditPage() {
       };
 
       if (isNew) {
-         await api.post('/properties', payload);
+         await api.post('/properties/', payload);
       } else {
-         await api.put(`/properties/${id}`, payload);
+         await api.put(`/properties/${id}/`, payload);
       }
       navigate('/properties');
     } catch (err: any) {

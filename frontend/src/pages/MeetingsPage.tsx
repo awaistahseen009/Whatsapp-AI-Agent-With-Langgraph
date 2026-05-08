@@ -26,7 +26,7 @@ export default function MeetingsPage() {
 
   const fetchMeetings = async () => {
     try {
-      const response = await api.get('/meetings');
+      const response = await api.get('/meetings/');
       setMeetings(response.data);
     } catch (error) {
       console.error('Failed to fetch meetings:', error);
@@ -38,7 +38,7 @@ export default function MeetingsPage() {
   const cancelMeeting = async (id: string) => {
     if (!window.confirm('Are you sure you want to cancel this meeting?')) return;
     try {
-      await api.delete(`/meetings/${id}`);
+      await api.delete(`/meetings/${id}/`);
       setMeetings(prev => prev.map(m => m.meeting_id === id ? { ...m, status: 'cancelled' } : m));
     } catch (error) {
       console.error('Failed to cancel meeting:', error);

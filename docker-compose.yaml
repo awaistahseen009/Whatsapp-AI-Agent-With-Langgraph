@@ -25,7 +25,7 @@ services:
       dockerfile: Dockerfile.frontend
       args:
         VITE_API_URL: ${VITE_API_URL:-https://api.reporider.live}
-    image: awaistahseen009/riley-frontend:v1.1.5
+    image: awaistahseen009/riley-frontend:v1.2.0
     container_name: riley-frontend
     ports:
       - "3000:80"

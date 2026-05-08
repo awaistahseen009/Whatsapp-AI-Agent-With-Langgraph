@@ -45,7 +45,7 @@ export default function MeetingDetailPage() {
 
   const fetchMeetingDetails = async () => {
     try {
-      const response = await api.get(`/meetings/${meetingId}/details`);
+      const response = await api.get(`/meetings/${meetingId}/details/`);
       setMeeting(response.data);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch meeting details');

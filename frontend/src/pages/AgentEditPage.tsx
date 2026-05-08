@@ -31,7 +31,7 @@ export default function AgentEditPage() {
     setSaving(true);
     setError(null);
     try {
-      await api.post('/auth/signup', formData);
+      await api.post('/auth/signup/', formData);
       navigate('/agents');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to create agent');

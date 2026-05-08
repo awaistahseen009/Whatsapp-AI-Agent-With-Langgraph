@@ -29,7 +29,7 @@ export default function SessionDetailPage() {
 
   const fetchTranscripts = async () => {
     try {
-      const response = await api.get(`/chat/sessions/${id}/transcripts`);
+      const response = await api.get(`/chat/sessions/${id}/transcripts/`);
       setTranscripts(response.data || []);
     } catch (error) {
       console.error('Failed to fetch transcripts:', error);

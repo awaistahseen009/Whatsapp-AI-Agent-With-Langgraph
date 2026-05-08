@@ -28,7 +28,7 @@ export default function ProfilePage() {
     
     setLoadingPwd(true);
     try {
-      await api.put('/auth/change-password', {
+      await api.put('/auth/change-password/', {
         old_password: oldPassword,
         new_password: newPassword,
         confirm_password: confirmPassword
@@ -52,7 +52,7 @@ export default function ProfilePage() {
     
     setLoadingSec(true);
     try {
-      await api.post('/auth/set-question', {
+      await api.post('/auth/set-question/', {
         question: securityQuestion,
         answer: securityAnswer
       });
