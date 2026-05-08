@@ -24,8 +24,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.frontend
       args:
-        VITE_API_URL: http://localhost:8000
-    image: awaistahseen009/riley-frontend:v1.0.0
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    image: awaistahseen009/riley-frontend:v1.0.1
     container_name: riley-frontend
     ports:
       - "3000:80"
