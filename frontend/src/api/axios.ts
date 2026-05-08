@@ -27,7 +27,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Do not intercept if the failing request is the login endpoint itself
-    if (originalRequest.url?.includes('/auth/login')) {
+    if (originalRequest?.url?.includes('/auth/login')) {
       return Promise.reject(error);
     }
 
@@ -50,14 +50,18 @@ api.interceptors.response.use(
       }
 
       try {
-        const { data } = await axios.get('/api/auth/refresh_token', {
+        const { data } = await api.get('/auth/refresh_token', {
           headers: { Authorization: `Bearer ${refreshToken}` },
         });
+
         const newAccessToken = data.access_token;
         localStorage.setItem('access_token', newAccessToken);
 
         // Update headers and retry request
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
+
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh token failed, force logout
