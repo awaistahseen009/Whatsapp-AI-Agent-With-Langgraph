@@ -36,7 +36,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: awaistahseen009/riley-frontend:v1.0.3
+          image: awaistahseen009/riley-frontend:v1.1.0
           ports:
             - containerPort: 80
           resources:
