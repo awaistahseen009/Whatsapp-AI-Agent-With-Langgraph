@@ -1,5 +1,6 @@
 import pytest
 import pytest_asyncio
+import asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
@@ -45,8 +46,8 @@ test_redis_client = MockRedisClient()
 import src.db.redis
 src.db.redis.token_blacklist_client = test_redis_client
 
-# Use proper asyncpg URL for the local postgres container
-TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:5432/postgres"
+# Use DATABASE_URL from environment (via Config)
+TEST_DATABASE_URL = Config.DATABASE_URL
 
 test_engine = create_async_engine(
     TEST_DATABASE_URL,
@@ -84,14 +85,33 @@ mock_graph.ainvoke.return_value = {
 
 app.state.graph = mock_graph
 
-@pytest_asyncio.fixture(scope="function", autouse=True)
+# Import Alembic components for migrations
+from alembic.config import Config as AlembicConfig
+from alembic import command
+import os
+
+def run_alembic_migrations():
+    """Run Alembic migrations on the test database."""
+    # Get backend root directory (parent of tests)
+    backend_dir = os.path.join(os.path.dirname(__file__), "..")
+    alembic_ini = os.path.join(backend_dir, "alembic.ini")
+    
+    # Create Alembic config
+    alembic_cfg = AlembicConfig(alembic_ini)
+    # Set the database URL from Config (sync version for alembic)
+    alembic_cfg.set_main_option("sqlalchemy.url", Config.DATABASE_URL.replace("+asyncpg", ""))
+    
+    # Run migrations
+    command.upgrade(alembic_cfg, "head")
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db():
-    """Create all tables before each test and drop them after."""
-    async with test_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+    """Run Alembic migrations before all tests."""
+    # Run migrations on real database
+    await asyncio.to_thread(run_alembic_migrations)
     yield
-    async with test_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.drop_all)
+    # Note: We don't drop tables after tests on real database
+    # This allows inspecting the database after test runs
 
 @pytest_asyncio.fixture(scope="function")
 async def db_session(setup_db):
