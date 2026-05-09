@@ -10,8 +10,40 @@ from src.app.main import app
 from src.db.session import get_db_session
 from src.app.models.user import User, UserRole
 from src.app.utils.utils import create_access_token, generate_hash_password
+from src.db.redis import token_blacklist_client
+from config import Config
 
 from sqlalchemy.pool import NullPool
+
+# Override Redis configuration for tests
+Config.REDIS_HOST = "localhost"
+Config.REDIS_PORT = "6379"
+
+# Mock Redis client for tests to avoid connection issues
+class MockRedisClient:
+    def __init__(self):
+        self.data = {}
+    
+    async def get(self, key):
+        return self.data.get(key)
+    
+    async def set(self, name, value, ex=None, nx=False):
+        if nx and name in self.data:
+            return None
+        self.data[name] = value
+        return True
+    
+    async def delete(self, *keys):
+        for key in keys:
+            self.data.pop(key, None)
+        return len(keys)
+
+# Create mock Redis client
+test_redis_client = MockRedisClient()
+
+# Patch the Redis module to use mock client
+import src.db.redis
+src.db.redis.token_blacklist_client = test_redis_client
 
 # Use proper asyncpg URL for the local postgres container
 TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:5432/postgres"
@@ -33,14 +65,24 @@ async def override_get_db_session():
 # Override the DB dependency
 app.dependency_overrides[get_db_session] = override_get_db_session
 
-# Skip the complex Langgraph state setup during normal test runs
-from contextlib import asynccontextmanager
-@asynccontextmanager
-async def test_lifespan(app_instance):
-    app_instance.state.graph = None
-    yield
+# Set up mock graph for tests
+from unittest.mock import AsyncMock
 
-app.router.lifespan_context = test_lifespan
+# Create a mock graph that returns realistic responses
+mock_graph = AsyncMock()
+mock_graph.ainvoke.return_value = {
+    "messages": [
+        type('MockAIMessage', (), {
+            'content': "I'm a test AI response for testing purposes."
+        })
+    ],
+    "response_type": "text",
+    "onboarding_complete": True,
+    "escalated": False,
+    "message_count": 1
+}
+
+app.state.graph = mock_graph
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
 async def setup_db():
